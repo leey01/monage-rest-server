@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Transaction;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -17,13 +18,13 @@ class TransactionController extends Controller
      */
     public function index()
     {
-        $transaction = Transaction::orderBy('time', 'DESC')->get();
-        $response = [
-            'message' => 'List transaction order by time',
-            'data' => $transaction
-        ];
+        $transaction = Transaction::where('user_id', Auth::user()->id)->orderBy('time', 'DESC')->get();
 
-        return response()->json($response, Response::HTTP_OK);
+        return response()->json([
+            'message' => 'List transaction order by time',
+            'data' => $transaction,
+            // 'id' => Auth::user()->id
+        ], Response::HTTP_OK);
     }
 
 //    /**
@@ -40,9 +41,9 @@ class TransactionController extends Controller
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request)
+    public function store(Request $request): \Illuminate\Http\JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'title' => ['required'],
@@ -56,7 +57,19 @@ class TransactionController extends Controller
         }
 
         try {
-            $transaction = Transaction::create($request->all());
+            // $transaction = Transaction::create([
+            //     'title' => $request->title,
+            //     'amount' => $request->amount,
+            //     'type' => $request->type,
+            //     'user_id' => Auth::user()->id
+            // ]);
+            $transaction = new Transaction();
+            $transaction->title = $request->title;
+            $transaction->amount = $request->amount;
+            $transaction->type = $request->type;
+            $transaction->user_id = Auth::user()->id;
+            $transaction->save();
+
             $response = [
                 'message' => 'Transaction created',
                 'data' => $transaction
@@ -74,11 +87,27 @@ class TransactionController extends Controller
      * Display the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show($id)
     {
-        //
+        try {
+            $transaction = Transaction::findOrFail($id);
+            $response = [
+                'message' => 'List transaction order by time',
+                'data' => $transaction
+            ];
+
+            return response()->json($response, Response::HTTP_OK);
+        } catch (\Exception $e) {
+            $response = [
+                'message' => 'Id not found'
+            ];
+
+            return response()->json($response, Response::HTTP_NOT_FOUND);
+        }
+
+
     }
 
     /**

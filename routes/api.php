@@ -26,9 +26,14 @@ Route::group(['middleware' => 'api', 'prefix' => 'auth'], function ($router) {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::post('refresh', [AuthController::class, 'refresh']);
     Route::post('me', [AuthController::class, 'me']);
+
 });
 
-Route::get('/transaction', [TransactionController::class, 'index']);
-Route::post('/transaction', [TransactionController::class, 'store']);
+Route::group(['middleware' => 'auth:api'], function ($router) {
+    Route::get('transaction', [TransactionController::class, 'index']);
+    Route::post('transaction', [TransactionController::class, 'store']);
+    Route::get('transaction/{id}', [TransactionController::class, 'show']);
+});
+
 
 
